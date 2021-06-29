@@ -15,13 +15,26 @@ COMMENT : (SLASH SLASH) .*? NL -> channel(COMMENTS);
 // ----------------------------------------------------------------------------
 // EXPRESSIONS
 // ----------------------------------------------------------------------------
+EQUAL               : '=';
+EXCLAMATION_MARK    : '!';
 LESS_THAN           : '<';
 GREATER_THAN        : '>';
-EQUAL               : '=';
+LESS_THAN_EQUAL     : LESS_THAN EQUAL;
+GREATER_THAN_EQUAL  : GREATER_THAN EQUAL;
+LOGIC_EQUAL         : EQUAL EQUAL;
+LOGIC_NOT_EQUAL     : EXCLAMATION_MARK EQUAL;
+LOGIC_AND           : AMPERSAND AMPERSAND;
+LOGIC_OR            : PIPE PIPE;
+LOGIC_BITWISE_AND   : AMPERSAND;
+LOGIC_BITWISE_OR    : PIPE;
+LOGIC_XOR           : CARET CARET;
+BITWISE_SHIFT_LEFT  : LESS_THAN LESS_THAN;
+BITWISE_SHIFT_RIGHT : GREATER_THAN GREATER_THAN;
+POWER_OPERATOR      : STAR STAR;
 AND                 : 'and';
+OR                  : 'or';
 COLON               : ':';
 SEMICOLON           : ';';
-EXCLAMATION_MARK    : '!';
 PLUS                : '+';
 MINUS               : '-';
 STAR                : '*';
@@ -44,12 +57,10 @@ SLASH               : '/';
 APEX                : '\'';
 QUOTES              : '"';
 PIPE                : '|';
-ARROW               : '->';
 PERCENT             : '%';
-LESS_THEN_EQUAL     : '<=';
-GREATER_THEN_EQUAL : '>=';
 CARET               : '^';
 TILDE               : '~';
+ARROW               : MINUS GREATER_THAN;
 
 // ----------------------------------------------------------------------------
 // NUMERICAL VALUES
@@ -59,13 +70,13 @@ fragment HEXDIGIT   : '0x' ('0'..'9' | 'a'..'f' | 'A'..'F')+;
 fragment OCTALDIGIT : '0' '0'..'7'+;
 fragment EXP        : ('E' | 'e') ('+' | '-')? INT ;
 fragment INT        : DIGIT+ [Ll]? LETTER?;
-HEX                 : '0' ('x'|'X') HEXDIGIT+ [Ll]? ;
 fragment FLOAT      : DIGIT+ '.' DIGIT* EXP? [Ll]? LETTER?
                     | DIGIT+ EXP? [Ll]? LETTER?
                     | '.' DIGIT+ EXP? [Ll]? LETTER?;
+fragment HEX        : '0' ('x'|'X') HEXDIGIT+ [Ll]? ;
 PERCENTAGE          : FLOAT '%'  ;
 COMPLEX             : INT 'i' | FLOAT 'i' ;
-NUMBER              : INT | FLOAT;
+NUMBER              : INT | FLOAT | HEX;
 
 // ----------------------------------------------------------------------------
 // STRINGS
@@ -78,15 +89,16 @@ ID      : ( LETTER
           | DIGIT
           | UNDERSCORE
           | DOLLAR
-          | DOT)
+          //| DOT
+          )
           ( LETTER
           | EXCLAMATION_MARK
           | AT_SIGN
           | POUND_SIGN
           | DIGIT
           | UNDERSCORE
-          | COLON
-          | DOT
+          //| COLON
+          //| DOT
           | LESS_THAN
           | GREATER_THAN
           | BACKSLASH LESS_THAN

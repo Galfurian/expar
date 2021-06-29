@@ -8,6 +8,8 @@ namespace expar
 std::string operator_to_string(Operator op)
 {
     switch (op) {
+    case op_assign:
+        return "=";
     case op_plus:
         return "+";
     case op_minus:
@@ -56,6 +58,8 @@ std::string operator_to_string(Operator op)
 
 Operator string_to_operator(const std::string &s)
 {
+    if (s == "=")
+        return op_assign;
     if (s == "+")
         return op_plus;
     if (s == "-")
@@ -101,6 +105,8 @@ Operator string_to_operator(const std::string &s)
 
 std::string operator_to_plain_string(Operator op)
 {
+    if (op == op_assign)
+        return "op_assign";
     if (op == op_plus)
         return "op_plus";
     if (op == op_minus)
@@ -146,6 +152,8 @@ std::string operator_to_plain_string(Operator op)
 
 Operator plain_string_to_operator(const std::string &s)
 {
+    if (s == "op_assign")
+        return op_assign;
     if (s == "op_plus")
         return op_plus;
     if (s == "op_minus")

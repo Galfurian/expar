@@ -159,6 +159,8 @@ void Test(const std::string &text)
     if (node) {
         std::cout << " OK ";
         node->accept(printer);
+        std::cout << " --> ";
+        node->accept(debug_printer);
     } else {
         std::cout << " FAILED";
     }
@@ -167,6 +169,7 @@ void Test(const std::string &text)
 
 int main(int argc, char *argv[])
 {
+    Test("a = b");
     Test("1+2+3+4");
     Test("1*2*3*4");
     Test("1-2-3-4");

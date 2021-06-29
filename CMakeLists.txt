@@ -91,6 +91,7 @@ add_library(
     ${CMAKE_SOURCE_DIR}/src/expar/parser.cpp
     ${CMAKE_SOURCE_DIR}/src/expar/enums.cpp
     ${CMAKE_SOURCE_DIR}/src/expar/core.cpp
+    ${CMAKE_SOURCE_DIR}/src/logging.cpp
     ${ANTLR_ExparLexer_CXX_OUTPUTS}
     ${ANTLR_ExparParser_CXX_OUTPUTS}
 )

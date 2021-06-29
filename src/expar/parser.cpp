@@ -3,6 +3,7 @@
 #include "antlr4-runtime.h"
 #include "ExparParserBaseVisitor.h"
 #include "ExparLexer.h"
+#include "logging.hpp"
 
 namespace expar::parser
 {
@@ -42,24 +43,17 @@ inline double to_number(ExparParser::Value_atomContext *ctx)
         ss >> value;
         return value;
     }
-    perror("Cannot type expression number!");
-    exit(1);
+    _error("Cannot type expression number!");
     return 0;
 }
 
 inline std::string to_string(ExparParser::Value_atomContext *ctx)
 {
-    if (ctx->ID()) {
+    if (ctx->ID())
         return ctx->ID()->toString();
-    }
-    if (ctx->HEX()) {
-        return ctx->HEX()->toString();
-    }
-    if (ctx->PERCENTAGE()) {
+    if (ctx->PERCENTAGE())
         return ctx->PERCENTAGE()->toString();
-    }
-    perror("Cannot type expression variable!");
-    exit(1);
+    _error("Cannot type expression variable!");
     return "";
 }
 
@@ -71,8 +65,7 @@ inline ScopeType to_scope(ExparParser::Value_scopeContext *ctx)
         return scp_square;
     if (ctx->OPEN_CURLY())
         return scp_curly;
-    perror("Cannot type scope!");
-    exit(1);
+    _error("Cannot type scope!");
     return scp_none;
 }
 
@@ -82,66 +75,67 @@ inline Operator to_operator(ExparParser::Value_unaryContext *ctx)
         return op_plus;
     if (ctx->MINUS())
         return op_minus;
-    perror("Cannot type operator!");
-    exit(1);
+    _error("Cannot type operator of unary operation!");
     return op_none;
 }
 
 inline Operator to_operator(ExparParser::Value_operatorContext *ctx)
 {
+    // : EQUAL
+    // | PLUS | MINUS | STAR | SLASH
+    // | LOGIC_AND | LOGIC_BITWISE_AND
+    // | LOGIC_OR  | LOGIC_BITWISE_OR
+    // | LOGIC_EQUAL | LOGIC_NOT_EQUAL
+    // | LOGIC_XOR
+    // | LESS_THAN    | LESS_THEN_EQUAL
+    // | GREATER_THAN | GREATER_THEN_EQUAL
+    // | EXCLAMATION_MARK
+    // | BITWISE_SHIFT_LEFT | BITWISE_SHIFT_RIGHT
+    // | POWER_OPERATOR | CARET
+    // | PERCENT
+    if (ctx->EQUAL())
+        return op_assign;
     if (ctx->PLUS())
         return op_plus;
     if (ctx->MINUS())
         return op_minus;
+    if (ctx->STAR())
+        return op_mult;
     if (ctx->SLASH())
         return op_div;
-    if (ctx->EXCLAMATION_MARK() && ctx->EQUAL().empty())
+    if (ctx->LOGIC_AND())
+        return op_and;
+    if (ctx->LOGIC_BITWISE_AND())
+        return op_band;
+    if (ctx->LOGIC_OR())
+        return op_or;
+    if (ctx->LOGIC_BITWISE_OR())
+        return op_bor;
+    if (ctx->LOGIC_EQUAL())
+        return op_eq;
+    if (ctx->LOGIC_NOT_EQUAL())
+        return op_neq;
+    if (ctx->LOGIC_XOR())
+        return op_xor;
+    if (ctx->LESS_THAN())
+        return op_lt;
+    if (ctx->LESS_THAN_EQUAL())
+        return op_le;
+    if (ctx->GREATER_THAN())
+        return op_lt;
+    if (ctx->GREATER_THAN_EQUAL())
+        return op_ge;
+    if (ctx->EXCLAMATION_MARK())
         return op_not;
+    if (ctx->BITWISE_SHIFT_LEFT())
+        return op_bsl;
+    if (ctx->BITWISE_SHIFT_RIGHT())
+        return op_bsr;
+    if (ctx->POWER_OPERATOR() || ctx->CARET())
+        return op_pow;
     if (ctx->PERCENT())
         return op_mod;
-    if (!ctx->STAR().empty()) {
-        if (ctx->STAR().size() == 1)
-            return op_mult;
-        return op_pow;
-    }
-    if (!ctx->PIPE().empty()) {
-        if (ctx->PIPE().size() == 1)
-            return op_bor;
-        return op_or;
-    }
-    if (!ctx->AMPERSAND().empty()) {
-        if (ctx->AMPERSAND().size() == 1)
-            return op_band;
-        return op_and;
-    }
-    if (!ctx->CARET().empty()) {
-        if (ctx->CARET().size() == 1)
-            return op_pow;
-        return op_xor;
-    }
-    if (!ctx->LESS_THAN().empty()) {
-        if (ctx->EQUAL().empty()) {
-            if (ctx->LESS_THAN().size() == 1)
-                return op_lt;
-            return op_bsl;
-        }
-        return op_le;
-    }
-    if (!ctx->GREATER_THAN().empty()) {
-        if (ctx->EQUAL().empty()) {
-            if (ctx->GREATER_THAN().size() == 1)
-                return op_gt;
-            return op_bsr;
-        }
-        return op_ge;
-    }
-    if (!ctx->EQUAL().empty()) {
-        if (ctx->EQUAL().size() == 2)
-            return op_eq;
-        return op_neq;
-    }
-    perror("Cannot type operator!");
-    exit(1);
+    _error("Cannot type operator of binary operation!");
     return op_none;
 }
 
@@ -242,7 +236,7 @@ private:
     inline void push(AstNode *node)
     {
         if (node == nullptr)
-            std::cerr << "Executing push and receiving a NULL node!\n";
+            _error("Executing push and receiving a NULL node!");
         stack.emplace_back(node);
     }
 
@@ -250,7 +244,7 @@ private:
     {
         auto node = this->get_back();
         if (node == nullptr)
-            std::cerr << "Executing pop and receiving a NULL node!\n";
+            _error("Executing pop and receiving a NULL node!");
         stack.pop_back();
         return node;
     }
@@ -290,19 +284,19 @@ private:
 
 AstNode *parse(const std::string &str)
 {
+    _debug("Reading stream...");
     antlr4::ANTLRInputStream input(str);
+    _debug("Building the lexer...");
     ExparLexer lexer(&input);
+    _debug("Generating the tokens...");
     antlr4::CommonTokenStream tokens(&lexer);
-
     tokens.fill();
-
+    _debug("Initializing the parser...");
     ExparParser parser(&tokens);
-
+    _debug("Parsing the equation...");
     ExparVisitor visitor;
-
-    // Parse the circuit.
     parser.value()->accept(&visitor);
-
+    _debug("Returning the result...");
     return visitor.root;
 }
 

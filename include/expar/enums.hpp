@@ -10,6 +10,7 @@ namespace expar
 /// @brief All possible operators.
 enum Operator {
     op_none,
+    op_assign,
     op_plus,
     op_minus,
     op_mult,
